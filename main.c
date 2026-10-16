@@ -13,14 +13,24 @@ int main(void) {
     while (1)
     {
         printf("mini-shell> ");
+        fflush(stdout);
 
         if (fgets(command, sizeof(command), stdin) == NULL)
         {
             break;
         }
-        command[strcspn(command, "\n")] = '\0';
+        char *newLine = strchr(command, '\n');
+        if(newLine != NULL) {
+            *newLine = '\0';
+        }else {
+            int ch = getchar();
+            while(ch != '\n' && ch != EOF) {
+                ch = getchar();
+            }
+            printf("%s\n", "shell: input too long");
+            continue;
+        }
 
-        
         if (command[0] == '\0')
             continue;
 
@@ -30,6 +40,10 @@ int main(void) {
         {
             i++;
             args[i] = strtok(NULL, " \t");
+        }
+        if(args[i] != NULL) {
+            printf("%s\n", "shell: too many arguments");
+            continue;
         }
         args[i] = NULL;
         if (args[0] == NULL)
