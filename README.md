@@ -12,6 +12,10 @@ A simple command-line shell written in C for learning processes, system calls, a
 - Go to the home directory with `cd` without arguments
 - Exit using `exit` or Ctrl+D on an empty input line
 - Display errors when commands or directory changes fail
+- Reject input lines that exceed the supported length
+- Reject commands with more than 63 tokens, including the command name
+- Keep the shell running when Ctrl+C interrupts an external command
+- Retry waiting for a child process if `waitpid()` is interrupted by a signal
 
 ## Requirements
 
@@ -63,11 +67,12 @@ The `cd` command runs in the parent process so that the shell's working director
 ## Current Limitations
 
 - Arguments are separated by spaces and tabs; quoted strings and escaping are not supported.
-- Input uses a fixed 1024-byte buffer; longer lines are not handled as a single command.
-- At most 63 command tokens are retained, including the program name; extra tokens are ignored.
+- Input uses a fixed 1024-byte buffer. A newline must fit in the buffer, allowing up to 1022 bytes before Enter.
+- Input without a trailing newline is currently rejected, even if it is short.
+- Commands are limited to 63 tokens, including the program name.
 - Pipes, redirection, and background execution are not supported.
 - Command history, arrow-key navigation, and tab completion are not supported.
-- Custom signal handling is not implemented.
+- Ctrl+C is ignored at the prompt; clearing the current input line is not implemented.
 
 ## Learning Goals
 
