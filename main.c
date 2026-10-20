@@ -6,9 +6,9 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
+#include <fcntl.h>
 
-int main(void)
-{
+int main(void) {
 
     char command[1024];
     char *args[64];
@@ -58,6 +58,35 @@ int main(void)
         args[i] = NULL;
         if (args[0] == NULL)
             continue;
+        
+        int redirectIndex = -1;
+        for (int i = 0; i < 64; i++) {
+            if(args[i] == NULL)
+                break;
+            if(strcmp(args[i] ,">") == 0) {        
+                redirectIndex = i;       
+                break;
+            }
+        }
+        char *outputFile =  NULL;
+        if (redirectIndex != -1)
+        {
+            if(redirectIndex == 0) {
+                printf("shell: missing command\n");
+                continue;
+            }
+            if (args[redirectIndex + 1] == NULL)
+            {
+                printf("shell: missing output file\n");
+                continue;
+            }
+            if(args[redirectIndex + 2] != NULL) {
+                printf("shell: unsupported redirection syntax\n");
+                continue;
+            }
+            outputFile = args[redirectIndex + 1];
+            args[redirectIndex] = NULL;
+        }
 
         if (strcmp(args[0], "exit") == 0)
             break;
@@ -95,6 +124,19 @@ int main(void)
         else if (pid == 0)
         {
             signal(SIGINT, SIG_DFL);
+            if(outputFile != NULL) {
+                int fd = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if(fd == -1) {
+                    perror(outputFile);
+                    _exit(1);
+                }
+                if (dup2(fd, STDOUT_FILENO) == -1) {
+                    perror("dup2");
+                    close(fd);
+                    _exit(1);
+                }   
+                close(fd);
+            }
             execvp(args[0], args);
             perror(args[0]);
             _exit(1);
